@@ -1,0 +1,77 @@
+# Production environment values for {{APP_NAME}}
+variant: "prod"
+
+# GCP project ID
+gcpProject: "{{GCP_PROJECT}}"
+
+# Production-specific replication
+replicaCount: 2
+
+# Pod Disruption Budget for high availability
+podDisruptionBudget:
+  minAvailable: 1
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+
+# Production resources (higher)
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Autoscaling enabled for production
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# Gateway configuration for production
+gateway:
+  enabled: true
+  gatewayClassName: "gke-l7-global-external-managed"
+  hostnames:
+    - "{{DOMAIN}}"
+    - "www.{{DOMAIN}}"
+
+# cert-manager configuration
+certManager:
+  email: admin@{{DOMAIN}}
+  issuerName: letsencrypt-dns01
+  issuerKind: Issuer
+
+# Workload identity
+workloadIdentity:
+  enabled: true
+  gsmServiceAccount: "{{APP_NAME}}-sa@{{GCP_PROJECT}}.iam.gserviceaccount.com"
+
+# Service account
+serviceAccount:
+  create: true
+  name: "{{APP_NAME}}-k8s-sa"
+  automount: true
+  annotations: {}
+
+# Secret Provider (enabled for prod)
+secretProvider:
+  enabled: true
+
+# Pod anti-affinity for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - {{APP_NAME}}
+          topologyKey: kubernetes.io/hostname

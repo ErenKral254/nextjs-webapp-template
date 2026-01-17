@@ -1,0 +1,93 @@
+# Base values for {{APP_NAME}}
+# Environment-specific values should override these
+
+replicaCount: 1
+
+image:
+  repository: {{DOCKER_REGISTRY}}/{{APP_NAME}}
+  pullPolicy: Always
+  tag: "1.0.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# GCP Configuration
+gcpProject: "{{GCP_PROJECT}}"
+
+# Gateway API configuration
+gateway:
+  enabled: true
+  gatewayClassName: "gke-l7-global-external-managed"
+  hostnames: []
+
+# cert-manager configuration
+certManager:
+  email: admin@{{DOMAIN}}
+  issuerName: letsencrypt-http01
+  issuerKind: Issuer
+
+# Database configuration
+database:
+  enabled: true
+
+# Secret Provider (GSM) configuration
+secretProvider:
+  enabled: false
+  secrets: []
+  # - objectName: my_secret
+  #   key: MY_SECRET_KEY
+  #   secretName: my-app-secret
+
+# Secret names in GSM
+secretNames:
+  databaseUrl: "{{APP_NAME}}_database_url"
+
+# Resources
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Autoscaling
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  minAvailable: 0
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+# Workload Identity
+workloadIdentity:
+  enabled: true
+  gsmServiceAccount: "{{APP_NAME}}-sa@{{GCP_PROJECT}}.iam.gserviceaccount.com"
+
+# Service Account
+serviceAccount:
+  create: true
+  name: "{{APP_NAME}}-k8s-sa"
+  automount: true
+  annotations: {}
+
+# Pod configuration
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Environment variables
+env: {}

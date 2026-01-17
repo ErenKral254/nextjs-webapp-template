@@ -1,0 +1,61 @@
+# Staging environment values for {{APP_NAME}}
+variant: "staging"
+
+# GCP project ID
+gcpProject: "{{GCP_PROJECT}}"
+
+# Staging-specific replication
+replicaCount: 1
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  minAvailable: 0
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+
+# Staging resources
+resources:
+  limits:
+    cpu: 150m
+    memory: 192Mi
+  requests:
+    cpu: 75m
+    memory: 96Mi
+
+# Autoscaling disabled for staging
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 2
+
+# Gateway configuration for staging
+gateway:
+  enabled: true
+  gatewayClassName: "gke-l7-global-external-managed"
+  hostnames:
+    - "staging.{{DOMAIN}}"
+
+# cert-manager configuration
+certManager:
+  email: admin@{{DOMAIN}}
+  issuerName: letsencrypt-http01
+  issuerKind: Issuer
+
+# Workload identity
+workloadIdentity:
+  enabled: true
+  gsmServiceAccount: "{{APP_NAME}}-sa@{{GCP_PROJECT}}.iam.gserviceaccount.com"
+
+# Service account
+serviceAccount:
+  create: true
+  name: "{{APP_NAME}}-k8s-sa"
+  automount: true
+  annotations: {}
+
+# Secret Provider (enabled for staging)
+secretProvider:
+  enabled: true

@@ -1,0 +1,61 @@
+# Development environment values for {{APP_NAME}}
+variant: "dev"
+
+# GCP project ID
+gcpProject: "{{GCP_PROJECT}}"
+
+# Development-specific replication
+replicaCount: 1
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  minAvailable: 0
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+
+# Development resources (smaller)
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Autoscaling disabled for dev
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 1
+
+# Gateway configuration for development
+gateway:
+  enabled: true
+  gatewayClassName: "gke-l7-global-external-managed"
+  hostnames:
+    - "dev.{{DOMAIN}}"
+
+# cert-manager configuration
+certManager:
+  email: admin@{{DOMAIN}}
+  issuerName: letsencrypt-http01
+  issuerKind: Issuer
+
+# Workload identity
+workloadIdentity:
+  enabled: true
+  gsmServiceAccount: "{{APP_NAME}}-sa@{{GCP_PROJECT}}.iam.gserviceaccount.com"
+
+# Service account
+serviceAccount:
+  create: true
+  name: "{{APP_NAME}}-k8s-sa"
+  automount: true
+  annotations: {}
+
+# Secret Provider (disabled for dev - use local env)
+secretProvider:
+  enabled: false

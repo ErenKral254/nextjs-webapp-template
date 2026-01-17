@@ -1,0 +1,17 @@
+{{- if .Values.gateway.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "app.fullname" . }}-tls
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "app.fullname" . }}-tls
+  dnsNames:
+  {{- range .Values.gateway.hostnames }}
+  - {{ . }}
+  {{- end }}
+  issuerRef:
+    name: {{ .Values.certManager.issuerName | default "letsencrypt-http01" }}
+    kind: {{ .Values.certManager.issuerKind | default "Issuer" }}
+{{- end }}
