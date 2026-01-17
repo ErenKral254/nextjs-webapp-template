@@ -1,0 +1,16 @@
+apiVersion: v2
+appVersion: v1.0.0
+description: "{{APP_TITLE}} - Next.js Web Application"
+home: https://github.com/{{GITHUB_ORG}}/{{APP_NAME}}
+keywords:
+  - kubernetes
+  - helm
+  - nextjs
+  - webapp
+kubeVersion: ">= 1.19.0-0"
+maintainers:
+  - email: admin@{{DOMAIN}}
+    name: "{{GITHUB_ORG}}"
+name: "{{APP_NAME}}"
+type: application
+version: 1.0.0
