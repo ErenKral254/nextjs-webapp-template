@@ -1,0 +1,81 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+// Optional: Field encryption support
+// Uncomment to enable field-level encryption
+// generator fieldEncryptionMigrations {
+//   provider = "prisma-field-encryption"
+//   output   = "./encryption-migrations"
+// }
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// User Management
+// ============================================================================
+
+model User {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Basic user info
+  email      String   @unique
+  name       String?
+  avatar     String?
+  
+  // Authentication
+  // For encrypted fields, add: /// @encrypted
+  // For hash lookups, add: /// @encryption:hash(fieldName)
+  
+  // Relations
+  posts      Post[]
+  
+  @@index([email])
+  @@map("users")
+}
+
+// ============================================================================
+// Content
+// ============================================================================
+
+model Post {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  title       String
+  content     String?  @db.Text
+  published   Boolean  @default(false)
+  
+  // Relations
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String   @map("author_id")
+  
+  @@index([authorId])
+  @@index([published])
+  @@map("posts")
+}
+
+// ============================================================================
+// Application Settings
+// ============================================================================
+
+model AppSetting {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  key         String   @unique
+  value       String   @db.Text
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  
+  @@index([key])
+  @@map("app_settings")
+}
