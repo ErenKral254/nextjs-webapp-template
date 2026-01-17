@@ -1,0 +1,360 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  DOCKER_REGISTRY: "{{DOCKER_REGISTRY}}"
+  IMAGE_NAME: "{{APP_NAME}}"
+  TAG: "latest"
+  HELM_NAMESPACE: "{{K8S_NAMESPACE}}"
+  CURRENT_BRANCH: "$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)"
+  PLATFORM_SINGLE_ARCH: "linux/amd64"
+  PLATFORM_MULTI_ARCH: "linux/amd64,linux/arm64"
+  PLATFORM: "{{.PLATFORM_MULTI_ARCH}}"
+
+tasks:
+  # ============================================================================
+  # Development tasks
+  # ============================================================================
+  dev:
+    desc: "Start the development server"
+    cmds:
+      - npm run dev
+
+  build:
+    desc: "Build the application for production"
+    cmds:
+      - npm run build
+
+  start:
+    desc: "Start the production server"
+    cmds:
+      - npm start
+
+  lint:
+    desc: "Run ESLint"
+    cmds:
+      - npm run lint
+
+  lint:format:
+    desc: "Format code with Prettier and fix linting issues"
+    cmds:
+      - npm run lint:format
+
+  type-check:
+    desc: "Run TypeScript type checking"
+    cmds:
+      - npm run type-check
+
+  clean:
+    desc: "Clean build artifacts and dependencies"
+    cmds:
+      - npm run clean
+
+  test:
+    desc: "Run tests"
+    cmds:
+      - npm run test
+
+  test:run:
+    desc: "Run tests once"
+    cmds:
+      - npm run test:run
+
+  # ============================================================================
+  # Database tasks
+  # ============================================================================
+  db:generate:
+    desc: "Generate Prisma client"
+    cmds:
+      - npm run db:generate
+
+  db:migrate:
+    desc: "Run database migrations (development)"
+    cmds:
+      - npm run db:migrate
+
+  db:migrate:deploy:
+    desc: "Deploy database migrations (production)"
+    cmds:
+      - npm run db:migrate:deploy
+
+  db:seed:
+    desc: "Seed the database"
+    cmds:
+      - npm run db:seed
+
+  db:studio:
+    desc: "Open Prisma Studio"
+    cmds:
+      - npm run db:studio
+
+  db:reset:
+    desc: "Reset database and run migrations"
+    cmds:
+      - npx prisma migrate reset
+
+  # ============================================================================
+  # Docker tasks
+  # ============================================================================
+  docker:setup:
+    silent: true
+    desc: "Setup Docker buildx for multi-platform builds"
+    cmds:
+      - docker buildx create --name {{.IMAGE_NAME}}-builder --driver docker-container --use || echo "Builder exists"
+      - docker buildx inspect --bootstrap {{.IMAGE_NAME}}-builder
+
+  docker:build:
+    silent: true
+    desc: "Build and push the Docker image"
+    deps: [docker:setup]
+    cmds:
+      - |
+        echo "Building Docker image {{.DOCKER_REGISTRY}}/{{.IMAGE_NAME}}:{{.TAG}}"
+        export DOCKER_BUILDKIT=1
+        export BUILDKIT_PROGRESS=plain
+        export GIT_COMMIT_SHA=$(git rev-parse --short HEAD)
+        docker buildx build --push --provenance false --platform {{.PLATFORM}} \
+          -t {{.DOCKER_REGISTRY}}/{{.IMAGE_NAME}}:{{.TAG}} \
+          -t {{.DOCKER_REGISTRY}}/{{.IMAGE_NAME}}:$GIT_COMMIT_SHA \
+          --build-arg GIT_COMMIT_SHA=$GIT_COMMIT_SHA \
+          --builder {{.IMAGE_NAME}}-builder \
+          .
+
+  docker:build:dev:
+    silent: true
+    desc: "Build Docker image for development (single architecture)"
+    cmds:
+      - task: docker:build
+        vars:
+          PLATFORM: "{{.PLATFORM_SINGLE_ARCH}}"
+          TAG: "dev-{{.CURRENT_BRANCH}}"
+
+  docker:build:staging:
+    silent: true
+    desc: "Build Docker image for staging"
+    cmds:
+      - task: docker:build
+        vars:
+          TAG: "staging"
+
+  docker:build:prod:
+    silent: true
+    desc: "Build Docker image for production"
+    cmds:
+      - task: docker:build
+        vars:
+          TAG: "latest"
+
+  docker:build:local:
+    desc: "Build Docker image locally (no push)"
+    cmds:
+      - docker build -t {{.IMAGE_NAME}}:local .
+
+  # ============================================================================
+  # Helm tasks
+  # ============================================================================
+  helm:lint:
+    silent: true
+    desc: "Lint the Helm chart"
+    cmds:
+      - helm lint ./chart/{{.IMAGE_NAME}} -f ./chart/{{.IMAGE_NAME}}/base/values.yaml
+
+  helm:template:
+    silent: true
+    desc: "Template the Helm chart"
+    cmds:
+      - helm template {{.IMAGE_NAME}} ./chart/{{.IMAGE_NAME}} -f ./chart/{{.IMAGE_NAME}}/base/values.yaml
+
+  helm:template:dev:
+    silent: true
+    desc: "Template the Helm chart for development"
+    cmds:
+      - helm template {{.IMAGE_NAME}}-dev ./chart/{{.IMAGE_NAME}} -f ./chart/{{.IMAGE_NAME}}/base/values.yaml -f ./chart/{{.IMAGE_NAME}}/dev/values.yaml
+
+  helm:template:staging:
+    silent: true
+    desc: "Template the Helm chart for staging"
+    cmds:
+      - helm template {{.IMAGE_NAME}}-staging ./chart/{{.IMAGE_NAME}} -f ./chart/{{.IMAGE_NAME}}/base/values.yaml -f ./chart/{{.IMAGE_NAME}}/staging/values.yaml
+
+  helm:template:prod:
+    silent: true
+    desc: "Template the Helm chart for production"
+    cmds:
+      - helm template {{.IMAGE_NAME}}-prod ./chart/{{.IMAGE_NAME}} -f ./chart/{{.IMAGE_NAME}}/base/values.yaml -f ./chart/{{.IMAGE_NAME}}/prod/values.yaml
+
+  helm:upgrade:dev:
+    silent: true
+    desc: "Upgrade deployment in development"
+    cmds:
+      - helm upgrade --install {{.IMAGE_NAME}}-dev ./chart/{{.IMAGE_NAME}} -f ./chart/{{.IMAGE_NAME}}/base/values.yaml -f ./chart/{{.IMAGE_NAME}}/dev/values.yaml --namespace={{.HELM_NAMESPACE}}-dev --create-namespace
+
+  helm:upgrade:staging:
+    silent: true
+    desc: "Upgrade deployment in staging"
+    cmds:
+      - helm upgrade --install {{.IMAGE_NAME}}-staging ./chart/{{.IMAGE_NAME}} -f ./chart/{{.IMAGE_NAME}}/base/values.yaml -f ./chart/{{.IMAGE_NAME}}/staging/values.yaml --namespace={{.HELM_NAMESPACE}}-staging --create-namespace
+
+  helm:upgrade:prod:
+    silent: true
+    desc: "Upgrade deployment in production"
+    cmds:
+      - helm upgrade --install {{.IMAGE_NAME}}-prod ./chart/{{.IMAGE_NAME}} -f ./chart/{{.IMAGE_NAME}}/base/values.yaml -f ./chart/{{.IMAGE_NAME}}/prod/values.yaml --namespace={{.HELM_NAMESPACE}}-prod --create-namespace
+
+  helm:uninstall:dev:
+    silent: true
+    desc: "Uninstall from development"
+    cmds:
+      - helm uninstall {{.IMAGE_NAME}}-dev -n {{.HELM_NAMESPACE}}-dev || true
+
+  helm:uninstall:staging:
+    silent: true
+    desc: "Uninstall from staging"
+    cmds:
+      - helm uninstall {{.IMAGE_NAME}}-staging -n {{.HELM_NAMESPACE}}-staging || true
+
+  helm:uninstall:prod:
+    silent: true
+    desc: "Uninstall from production"
+    cmds:
+      - helm uninstall {{.IMAGE_NAME}}-prod -n {{.HELM_NAMESPACE}}-prod || true
+
+  # ============================================================================
+  # Deployment workflows
+  # ============================================================================
+  deploy:dev:
+    desc: "Complete deployment workflow for development"
+    cmds:
+      - task: docker:build:dev
+      - task: helm:upgrade:dev
+      - echo "Development deployment complete!"
+
+  deploy:staging:
+    desc: "Complete deployment workflow for staging"
+    cmds:
+      - task: docker:build:staging
+      - task: helm:upgrade:staging
+      - echo "Staging deployment complete!"
+
+  deploy:prod:
+    desc: "Complete deployment workflow for production"
+    cmds:
+      - task: docker:build:prod
+      - task: helm:upgrade:prod
+      - echo "Production deployment complete!"
+
+  # ============================================================================
+  # Flux CD tasks
+  # ============================================================================
+  flux:reconcile:dev:
+    desc: "Force Flux to reconcile dev deployment"
+    cmds:
+      - flux reconcile helmrelease {{.IMAGE_NAME}}-dev -n flux-system
+      - kubectl get helmrelease {{.IMAGE_NAME}}-dev -n flux-system
+
+  flux:reconcile:staging:
+    desc: "Force Flux to reconcile staging deployment"
+    cmds:
+      - flux reconcile helmrelease {{.IMAGE_NAME}}-staging -n flux-system
+      - kubectl get helmrelease {{.IMAGE_NAME}}-staging -n flux-system
+
+  flux:reconcile:prod:
+    desc: "Force Flux to reconcile prod deployment"
+    cmds:
+      - flux reconcile helmrelease {{.IMAGE_NAME}}-prod -n flux-system
+      - kubectl get helmrelease {{.IMAGE_NAME}}-prod -n flux-system
+
+  flux:status:
+    desc: "Check Flux status for all deployments"
+    cmds:
+      - echo "=== OCIRepositories ==="
+      - kubectl get ocirepository -n flux-system | grep {{.IMAGE_NAME}} || echo "No OCIRepositories found"
+      - echo ""
+      - echo "=== HelmReleases ==="
+      - kubectl get helmrelease -n flux-system | grep {{.IMAGE_NAME}} || echo "No HelmReleases found"
+      - echo ""
+      - echo "=== Pods ==="
+      - kubectl get pods -n {{.HELM_NAMESPACE}}-dev -l app.kubernetes.io/name={{.IMAGE_NAME}} 2>/dev/null || echo "No dev pods"
+      - kubectl get pods -n {{.HELM_NAMESPACE}}-staging -l app.kubernetes.io/name={{.IMAGE_NAME}} 2>/dev/null || echo "No staging pods"
+      - kubectl get pods -n {{.HELM_NAMESPACE}}-prod -l app.kubernetes.io/name={{.IMAGE_NAME}} 2>/dev/null || echo "No prod pods"
+
+  flux:apply:
+    desc: "Apply all Flux configurations to cluster"
+    cmds:
+      - echo "Applying Flux configurations..."
+      - kubectl apply -f flux/dev/ || echo "Dev configs applied/failed"
+      - kubectl apply -f flux/staging/ || echo "Staging configs applied/failed"
+      - kubectl apply -f flux/prod/ || echo "Prod configs applied/failed"
+      - echo ""
+      - task: flux:status
+
+  # ============================================================================
+  # Utility tasks
+  # ============================================================================
+  logs:dev:
+    desc: "Show logs for dev deployment"
+    cmds:
+      - kubectl logs -l app.kubernetes.io/name={{.IMAGE_NAME}} -n {{.HELM_NAMESPACE}}-dev --tail=100 -f
+
+  logs:staging:
+    desc: "Show logs for staging deployment"
+    cmds:
+      - kubectl logs -l app.kubernetes.io/name={{.IMAGE_NAME}} -n {{.HELM_NAMESPACE}}-staging --tail=100 -f
+
+  logs:prod:
+    desc: "Show logs for prod deployment"
+    cmds:
+      - kubectl logs -l app.kubernetes.io/name={{.IMAGE_NAME}} -n {{.HELM_NAMESPACE}}-prod --tail=100 -f
+
+  status:dev:
+    desc: "Check status of dev deployment"
+    cmds:
+      - kubectl get pods,svc,gateway,httproute -n {{.HELM_NAMESPACE}}-dev
+
+  status:staging:
+    desc: "Check status of staging deployment"
+    cmds:
+      - kubectl get pods,svc,gateway,httproute -n {{.HELM_NAMESPACE}}-staging
+
+  status:prod:
+    desc: "Check status of prod deployment"
+    cmds:
+      - kubectl get pods,svc,gateway,httproute -n {{.HELM_NAMESPACE}}-prod
+
+  # ============================================================================
+  # Dependencies tasks
+  # ============================================================================
+  deps:install:
+    desc: "Install dependencies"
+    cmds:
+      - npm install
+
+  deps:clean:
+    desc: "Clean dependencies"
+    cmds:
+      - rm -rf node_modules package-lock.json
+
+  deps:clean:install:
+    desc: "Clean and reinstall dependencies"
+    cmds:
+      - task: deps:clean
+      - task: deps:install
+
+  # ============================================================================
+  # Setup tasks
+  # ============================================================================
+  setup:
+    desc: "Run initial project setup"
+    cmds:
+      - task: deps:install
+      - task: db:generate
+      - echo "Project setup complete! Run 'task dev' to start."
+
+  setup:gcp:
+    desc: "Setup GCP authentication"
+    cmds:
+      - gcloud auth login
+      - gcloud config set project {{GCP_PROJECT}}
+      - gcloud auth configure-docker {{GCP_REGION}}-docker.pkg.dev
+      - gcloud container clusters get-credentials autopilot-cluster-1 --region {{GCP_REGION}} --project {{GCP_PROJECT}}
