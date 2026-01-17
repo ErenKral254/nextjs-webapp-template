@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Kubernetes
+chart/
+flux/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Development
+.devcontainer/
+.env*
+!.env.example
+Taskfile.yml
+tasks/
