@@ -1,0 +1,69 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: {{APP_NAME}}-staging
+  namespace: flux-system
+spec:
+  interval: 10m
+  chartRef:
+    kind: OCIRepository
+    name: {{APP_NAME}}-staging
+    namespace: flux-system
+  targetNamespace: {{K8S_NAMESPACE}}-staging
+  valuesFrom: []
+  driftDetection:
+    mode: enabled
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+    disableSchemaValidation: true
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+    cleanupOnFail: true
+    disableSchemaValidation: true
+  rollback:
+    recreate: true
+    cleanupOnFail: true
+  timeout: 15m
+  values:
+    variant: staging
+    fullnameOverride: "{{APP_NAME}}-staging"
+    replicaCount: 1
+    image:
+      repository: {{DOCKER_REGISTRY}}/{{APP_NAME}}
+      tag: "1.0.0"
+      pullPolicy: Always
+    autoscaling:
+      enabled: false
+    workloadIdentity:
+      enabled: true
+      gsmServiceAccount: {{APP_NAME}}-sa@{{GCP_PROJECT}}.iam.gserviceaccount.com
+    serviceAccount:
+      create: true
+      name: {{APP_NAME}}-k8s-sa
+      automount: true
+    service:
+      type: ClusterIP
+      port: 80
+    resources:
+      requests:
+        cpu: 75m
+        memory: 96Mi
+      limits:
+        cpu: 150m
+        memory: 192Mi
+    gateway:
+      enabled: true
+      gatewayClassName: gke-l7-global-external-managed
+      hostnames:
+        - staging.{{DOMAIN}}
+    certManager:
+      email: admin@{{DOMAIN}}
+      issuerName: letsencrypt-http01
+      issuerKind: Issuer
+    secretProvider:
+      enabled: true

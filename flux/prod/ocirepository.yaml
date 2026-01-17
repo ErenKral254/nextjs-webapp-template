@@ -1,0 +1,14 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: {{APP_NAME}}-prod
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: oci://{{DOCKER_REGISTRY}}/{{APP_NAME}}
+  ref:
+    semver: "*"
+  secretRef:
+    name: gcp-credentials
+  provider: gcp
